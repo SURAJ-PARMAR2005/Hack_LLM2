@@ -1,0 +1,52 @@
+[
+  {
+    "input": "Patient has high blood pressure",
+    "patientSummary": "Your blood pressure is higher than normal. This means your heart is working harder than it should to pump blood through your body. It's important to follow up with your doctor to discuss lifestyle changes and possibly medication. Reduce salt intake, exercise regularly, and manage stress.",
+    "clinicianSummary": "Patient presents with elevated blood pressure. Monitor BP readings regularly and consider lifestyle modifications including DASH diet, aerobic exercise, and stress management. Evaluate for secondary causes and adjust antihypertensive therapy as needed based on risk factors and comorbidities."
+  },
+  {
+    "input": "Patient reports headaches",
+    "patientSummary": "You're experiencing headaches. These can be caused by many things like stress, lack of sleep, dehydration, or eye strain. Try to stay hydrated, get enough rest, and reduce screen time. If headaches persist or become severe, consult your doctor immediately.",
+    "clinicianSummary": "Patient reports headache symptoms. Consider differential diagnosis including tension headaches, migraines, cluster headaches, or secondary causes. Assess for red flags: sudden onset, fever, neurological symptoms, or trauma. Recommend appropriate imaging if indicated."
+  },
+  {
+    "input": "Patient has diabetes type 2",
+    "patientSummary": "You have type 2 diabetes, which means your body doesn't use insulin properly. Work with your healthcare team to monitor blood sugar, eat a balanced diet, exercise regularly, and take medications as prescribed. Regular check-ups are important.",
+    "clinicianSummary": "Patient diagnosed with Type 2 Diabetes Mellitus. Implement comprehensive diabetes management including glycemic control targets (HbA1c <7%), blood pressure control (<130/80), and lipid management. Consider metformin as first-line therapy and assess for complications."
+  },
+  {
+    "input": "Patient experiencing chest pain",
+    "patientSummary": "Chest pain is a serious symptom that requires immediate medical attention. Don't ignore it - call emergency services right away. This could be related to your heart, lungs, or other important organs. Better safe than sorry.",
+    "clinicianSummary": "Patient reports chest pain - this is a medical emergency requiring immediate evaluation. Assess for cardiac ischemia, pulmonary embolism, aortic dissection, or other life-threatening conditions. Order ECG, cardiac enzymes, and consider urgent cardiac catheterization if STEMI criteria met."
+  },
+  {
+    "input": "Patient has asthma symptoms",
+    "patientSummary": "You're showing signs of asthma with difficulty breathing, wheezing, or chest tightness. Use your rescue inhaler as prescribed and avoid triggers like smoke, dust, or exercise if it makes symptoms worse. Contact your doctor if symptoms don't improve.",
+    "clinicianSummary": "Patient presents with asthma symptoms including dyspnea, wheezing, and chest tightness. Assess severity using peak flow measurements and symptom frequency. Review current controller medications and consider step-up therapy. Ensure proper inhaler technique and asthma action plan."
+  },
+  {
+    "input": "Patient reports fatigue and weakness",
+    "patientSummary": "You're feeling tired and weak, which can have many causes like stress, poor sleep, or nutritional deficiencies. Try to get adequate rest, eat nutritious meals, and stay hydrated. If fatigue persists for weeks, see your doctor for evaluation.",
+    "clinicianSummary": "Patient reports fatigue and weakness. Consider broad differential including anemia, thyroid disorders, depression, sleep disorders, or chronic fatigue syndrome. Order CBC, TSH, B12, folate, and iron studies. Assess for underlying medical conditions and psychiatric factors."
+  },
+  {
+    "input": "Patient has joint pain and stiffness",
+    "patientSummary": "You're experiencing joint pain and stiffness, which can make daily activities difficult. This might be arthritis or another joint condition. Gentle exercise, warm compresses, and over-the-counter pain relievers may help. See your doctor for proper diagnosis.",
+    "clinicianSummary": "Patient presents with joint pain and stiffness. Evaluate for inflammatory arthritis (RA, psoriatic), osteoarthritis, or other rheumatic conditions. Assess joint involvement pattern, morning stiffness duration, and inflammatory markers. Consider imaging studies and rheumatology referral if indicated."
+  },
+  {
+    "input": "Patient reports sleep problems",
+    "patientSummary": "You're having trouble sleeping, which can affect your health and daily life. Try to maintain a regular sleep schedule, create a relaxing bedtime routine, and avoid screens before bed. If sleep problems continue, talk to your doctor about solutions.",
+    "clinicianSummary": "Patient reports sleep disturbances. Assess for insomnia, sleep apnea, restless leg syndrome, or circadian rhythm disorders. Review sleep hygiene practices, screen for depression/anxiety, and consider sleep study if OSA suspected. Evaluate medications that may affect sleep."
+  },
+  {
+    "input": "Patient has skin rash",
+    "patientSummary": "You have a skin rash that could be caused by allergies, infections, or skin conditions. Avoid scratching, keep the area clean and dry, and don't use harsh soaps. If the rash spreads, becomes painful, or doesn't improve, see your doctor.",
+    "clinicianSummary": "Patient presents with skin rash. Assess morphology, distribution, and associated symptoms. Consider differential including allergic contact dermatitis, viral exanthems, autoimmune conditions, or drug reactions. Order appropriate testing and consider dermatology referral for biopsy if diagnosis unclear."
+  },
+  {
+    "input": "Patient reports digestive issues",
+    "patientSummary": "You're having digestive problems like stomach pain, bloating, or changes in bowel habits. These can be caused by diet, stress, or underlying conditions. Try eating smaller meals, avoiding trigger foods, and managing stress. See your doctor if symptoms persist.",
+    "clinicianSummary": "Patient reports gastrointestinal symptoms. Assess for functional disorders (IBS), inflammatory conditions (IBD), or organic disease. Review diet, stress factors, and medication history. Consider endoscopy, imaging, or specialist referral based on symptoms and risk factors."
+  }
+]
