@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware configuration
 // Enable CORS for frontend communication
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'], // Allow frontend ports
+  origin: ['http://localhost:3000', 'https://hack-llm2.onrender.com', 'https://medical-summarizer-o9iw.onrender.com'], // Allow frontend ports
   credentials: true
 }));
 
