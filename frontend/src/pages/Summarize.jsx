@@ -49,7 +49,7 @@ const Summarize = () => {
       }
     } catch (error) {
       console.error('Error calling API:', error);
-      setError('Failed to connect to the backend server. Please make sure the backend is running on port 5000.');
+      setError('Failed to connect to the backend server. Please make sure the backend is running on https://hack-llm2.onrender.com.');
     } finally {
       setIsLoading(false);
     }
