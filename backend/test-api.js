@@ -17,7 +17,7 @@ const testCases = [
 
 async function testAPI() {
   console.log('🧪 Testing Medical Summarizer Backend API\n');
-  console.log('📍 Backend URL: http://localhost:5000\n');
+  console.log('📍 Backend URL: https://hack-llm2.onrender.com\n');
 
   for (let i = 0; i < testCases.length; i++) {
     const testCase = testCases[i];
@@ -25,7 +25,7 @@ async function testAPI() {
     console.log('─'.repeat(50));
 
     try {
-      const response = await fetch('http://localhost:5000/summarize', {
+      const response = await fetch('https://hack-llm2.onrender.com/summarize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,7 +46,7 @@ async function testAPI() {
       }
     } catch (error) {
       console.log(`❌ Connection Error: ${error.message}`);
-      console.log('💡 Make sure the backend server is running on port 5000');
+      console.log('💡 Make sure the backend server is running on https://hack-llm2.onrender.com');
       break;
     }
 
