@@ -3,16 +3,24 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
+require('dotenv').config();
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+// Multer setup (in-memory)
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
 // Middleware configuration
 // Enable CORS for frontend communication
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://hack-llm2.onrender.com', 'https://medical-summarizer-o9iw.onrender.com'], // Allow frontend ports
-  credentials: true
+	origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'https://hack-llm2.onrender.com', 'https://medical-summarizer-o9iw.onrender.com'], // Allow frontend ports
+	credentials: true
 }));
 
 // Parse JSON bodies from incoming requests
@@ -99,6 +107,95 @@ function findMatchingSummaries(userInput) {
   };
 }
 
+// Gemini client helper
+async function generateWithGemini(inputText, summaryType) {
+	if (!GEMINI_API_KEY) {
+		throw new Error('Missing GEMINI_API_KEY. Set it in backend/.env');
+	}
+	const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+	const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+	const prompt = `You are a medical summarization assistant.
+
+Summarize the following medical content into two distinct summaries:
+1) Patient-friendly: simple language, empathetic tone, avoid jargon, include next steps.
+2) Clinician-focused: clinical language, differential considerations, suggested tests, management plan.
+
+Return STRICT JSON with keys: patientSummary, clinicianSummary.
+
+Content:
+"""
+${inputText}
+"""`;
+
+	const result = await model.generateContent({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+	const text = result.response.text();
+	// Try to extract JSON
+	try {
+		const jsonStart = text.indexOf('{');
+		const jsonEnd = text.lastIndexOf('}');
+		const jsonSlice = jsonStart >= 0 && jsonEnd > jsonStart ? text.slice(jsonStart, jsonEnd + 1) : text;
+		const parsed = JSON.parse(jsonSlice);
+		return {
+			patientSummary: String(parsed.patientSummary || ''),
+			clinicianSummary: String(parsed.clinicianSummary || '')
+		};
+	} catch (e) {
+		// Fallback: split by sections if model didn't return pure JSON
+		const patient = /patient[-\s]?friendly[\s\S]*?:[\s\S]*?(?=clinician|$)/i.exec(text)?.[0] || text;
+		const clinician = /clinician[\s\S]*?:[\s\S]*$/i.exec(text)?.[0] || text;
+		return {
+			patientSummary: patient.replace(/^[^:]*:/, '').trim(),
+			clinicianSummary: clinician.replace(/^[^:]*:/, '').trim()
+		};
+	}
+}
+
+// Gemini helper for PDFs (send file as inline data)
+async function generateFromPdfWithGemini(pdfBuffer, summaryType) {
+	if (!GEMINI_API_KEY) {
+		throw new Error('Missing GEMINI_API_KEY. Set it in backend/.env');
+	}
+	const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+	const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+	const instructions = `You are a medical summarization assistant.
+
+Summarize the attached medical PDF into two distinct summaries:
+1) Patient-friendly: simple language, empathetic tone, avoid jargon, include next steps.
+2) Clinician-focused: clinical language, differential considerations, suggested tests, management plan.
+
+Return STRICT JSON with keys: patientSummary, clinicianSummary.`;
+
+	const result = await model.generateContent({
+		contents: [{
+			role: 'user',
+			parts: [
+				{ text: instructions },
+				{ inlineData: { mimeType: 'application/pdf', data: pdfBuffer.toString('base64') } }
+			]
+		}]
+	});
+	const text = result.response.text();
+	try {
+		const jsonStart = text.indexOf('{');
+		const jsonEnd = text.lastIndexOf('}');
+		const jsonSlice = jsonStart >= 0 && jsonEnd > jsonStart ? text.slice(jsonStart, jsonEnd + 1) : text;
+		const parsed = JSON.parse(jsonSlice);
+		return {
+			patientSummary: String(parsed.patientSummary || ''),
+			clinicianSummary: String(parsed.clinicianSummary || '')
+		};
+	} catch (e) {
+		const patient = /patient[-\s]?friendly[\s\S]*?:[\s\S]*?(?=clinician|$)/i.exec(text)?.[0] || text;
+		const clinician = /clinician[\s\S]*?:[\s\S]*$/i.exec(text)?.[0] || text;
+		return {
+			patientSummary: patient.replace(/^[^:]*:/, '').trim(),
+			clinicianSummary: clinician.replace(/^[^:]*:/, '').trim()
+		};
+	}
+}
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -114,51 +211,81 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Main summarize endpoint
-app.post('/summarize', (req, res) => {
-  try {
-    console.log('📝 Received summarize request');
-    
-    // Extract user input from request body
-    const { userInput } = req.body;
-    
-    // Validate input
-    if (!userInput || typeof userInput !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid input. Please provide "userInput" as a string.',
-        example: {
-          userInput: "Patient has high blood pressure"
-        }
-      });
-    }
+// Main summarize endpoint (supports JSON or multipart with file)
+app.post('/summarize', upload.single('file'), async (req, res) => {
+	try {
+		console.log('📝 Received summarize request');
 
-    // Log the input for debugging
-    console.log(`📋 User input: "${userInput}"`);
-    
-    // Find matching summaries
-    const summaries = findMatchingSummaries(userInput);
-    
-    // Prepare response
-    const response = {
-      success: true,
-      input: userInput,
-      summaries: summaries,
-      timestamp: new Date().toISOString(),
-      disclaimer: "This is an AI-generated summary for educational purposes only. Always consult with qualified healthcare professionals for medical advice."
-    };
+		let inputText = '';
+		const summaryType = (req.body?.summaryType || 'both').toString();
 
-    console.log('✅ Summary generated successfully');
-    res.status(200).json(response);
+		if (req.file) {
+			console.log(`📎 File received: ${req.file.originalname} (${req.file.mimetype}, ${req.file.size} bytes)`);
+			if (req.file.mimetype === 'application/pdf' || req.file.originalname.toLowerCase().endsWith('.pdf')) {
+				const pdfData = await pdfParse(req.file.buffer);
+				inputText = (pdfData.text || '').trim();
+			} else {
+				// Treat other text-like files as UTF-8 text
+				inputText = req.file.buffer.toString('utf8');
+			}
+			// If user also provided text, append it
+			if (req.body?.userInput) {
+				inputText = `${req.body.userInput}\n\n${inputText}`.trim();
+			}
+		} else {
+			const { userInput } = req.body || {};
+			if (!userInput || typeof userInput !== 'string') {
+				return res.status(400).json({
+					success: false,
+					error: 'Invalid input. Provide "userInput" as a string or upload a file under field "file".',
+					example: { userInput: 'Patient has high blood pressure' }
+				});
+			}
+			inputText = userInput;
+		}
 
-  } catch (error) {
-    console.error('❌ Error in summarize endpoint:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error occurred while processing your request.',
-      message: error.message
-    });
-  }
+		console.log(`📋 Input length: ${inputText.length} chars`);
+
+		let summaries;
+		try {
+			// Prefer Gemini if key configured
+			if (req.file && (req.file.mimetype === 'application/pdf' || req.file.originalname.toLowerCase().endsWith('.pdf')) && !inputText) {
+				// If PDF has no extractable text, send the PDF to Gemini directly
+				summaries = await generateFromPdfWithGemini(req.file.buffer, summaryType);
+			} else {
+				summaries = await generateWithGemini(inputText, summaryType);
+			}
+		} catch (aiError) {
+			console.warn('⚠️ Gemini failed or missing key. Falling back to mock summaries:', aiError.message);
+			summaries = findMatchingSummaries(inputText);
+		}
+
+		// If user asked for only one type, blank out the other
+		if (summaryType === 'patient') {
+			summaries = { patientSummary: summaries.patientSummary, clinicianSummary: '' };
+		} else if (summaryType === 'clinician') {
+			summaries = { patientSummary: '', clinicianSummary: summaries.clinicianSummary };
+		}
+
+		const response = {
+			success: true,
+			input: inputText.slice(0, 5000),
+			summaries,
+			timestamp: new Date().toISOString(),
+			disclaimer: 'This is an AI-generated summary for educational purposes only. Always consult with qualified healthcare professionals for medical advice.'
+		};
+
+		console.log('✅ Summary generated successfully');
+		res.status(200).json(response);
+
+	} catch (error) {
+		console.error('❌ Error in summarize endpoint:', error);
+		res.status(500).json({
+			success: false,
+			error: 'Internal server error occurred while processing your request.',
+			message: error.message
+		});
+	}
 });
 
 // Endpoint to view available mock data (for testing purposes)

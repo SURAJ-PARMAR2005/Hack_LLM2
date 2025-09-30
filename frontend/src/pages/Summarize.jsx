@@ -7,6 +7,7 @@ const Summarize = () => {
   const [summaryType, setSummaryType] = useState('both');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [file, setFile] = useState(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -15,16 +16,25 @@ const Summarize = () => {
     setError('');
     
     try {
-      // Call the real backend API
-      const response = await fetch('https://hack-llm2.onrender.com/summarize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userInput: qaText
-        })
-      });
+      const endpoint = 'https://hack-llm2.onrender.com/summarize';
+
+      let response;
+      if (file) {
+        const form = new FormData();
+        form.append('summaryType', summaryType);
+        if (qaText?.trim()) form.append('userInput', qaText.trim());
+        form.append('file', file);
+        response = await fetch(endpoint, {
+          method: 'POST',
+          body: form
+        });
+      } else {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput: qaText, summaryType })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -49,20 +59,21 @@ const Summarize = () => {
       }
     } catch (error) {
       console.error('Error calling API:', error);
-      setError('Failed to connect to the backend server. Please make sure the backend is running on https://hack-llm2.onrender.com.');
+      setError(error.message || 'Failed to generate summary. Check backend logs.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const f = e.target.files[0];
+    setFile(f || null);
+    if (f && f.type.startsWith('text/')) {
       const reader = new FileReader();
       reader.onload = (event) => {
         setQaText(event.target.result);
       };
-      reader.readAsText(file);
+      reader.readAsText(f);
     }
   };
 
@@ -106,7 +117,7 @@ const Summarize = () => {
                   placeholder="Paste your medical Q&A text here... (e.g., 'Patient has high blood pressure')"
                   value={qaText}
                   onChange={(e) => setQaText(e.target.value)}
-                  required
+                  required={!file}
                 />
                 <small style={{ color: 'var(--gray-500)', marginTop: '0.5rem', display: 'block' }}>
                   💡 <strong>Try these examples:</strong> "Patient has high blood pressure", "Patient reports headaches", "Patient has diabetes type 2"
@@ -117,12 +128,12 @@ const Summarize = () => {
                 <label className="form-label">File Upload</label>
                 <input
                   type="file"
-                  accept=".txt,.doc,.docx,.pdf"
+                  accept=".pdf,.txt"
                   onChange={handleFileUpload}
                   className="form-input"
                 />
                 <small style={{ color: 'var(--gray-500)', marginTop: '0.5rem', display: 'block' }}>
-                  Supported formats: TXT, DOC, DOCX, PDF
+                  Supported formats: PDF, TXT
                 </small>
               </div>
 
@@ -165,7 +176,7 @@ const Summarize = () => {
               <button
                 type="submit"
                 className="btn btn-primary btn-large"
-                disabled={isLoading || !qaText.trim()}
+                disabled={isLoading || (!qaText.trim() && !file)}
                 style={{ width: '100%' }}
               >
                 {isLoading ? 'Generating Summary...' : 'Generate Summary'}

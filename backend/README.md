@@ -42,7 +42,14 @@ backend/
    npm install
    ```
 
-3. **Start the server**
+3. **Set environment variables**
+   Create a `.env` file in `backend/` with your Google Gemini API key:
+   ```bash
+   GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+   # or GOOGLE_API_KEY also supported
+   ```
+
+4. **Start the server**
    ```bash
    # Development mode (with auto-restart)
    npm run dev
@@ -61,12 +68,18 @@ backend/
 ### 2. Generate Summaries
 - **POST** `/summarize`
 - **Description**: Generate medical summaries based on user input
-- **Request Body**:
+- **Request Body (JSON)**:
   ```json
   {
-    "userInput": "Patient has high blood pressure"
+    "userInput": "Patient has high blood pressure",
+    "summaryType": "both" // one of: patient | clinician | both
   }
   ```
+- **Request (multipart/form-data)**: For PDF or text file
+  - Fields:
+    - `file`: .pdf or .txt
+    - `userInput` (optional): extra notes to append
+    - `summaryType` (optional): patient | clinician | both
 - **Response**:
   ```json
   {
